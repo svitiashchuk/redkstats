@@ -1,4 +1,4 @@
-# redkstats
+# redkstats <sup>🟥 🔑 📊</sup>
 `redkstats` is a result of mixing parts of words "redis keys stats". This utility is intended for gathering keys and their idleTime to build basic statistics for further analysis.
 
 ## The real use-case
