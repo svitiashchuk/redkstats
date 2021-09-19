@@ -7,3 +7,6 @@ Imagine that you have plenty of unnecessary data. And keys are not set to be "ex
 So this is the moment where this utility comes in action. Using `redkstats` you could collect all the keys and their idle time (see redis command [OBJECT IDLETIME](https://redis.io/commands/OBJECT)), group them by their prefix and get some
 basic stats. Summary that you got might help you to decide which keys should be deleted from the storage.
 
+## License
+This project is licensed under the GNU GPLv3 - see the [LICENSE](LICENSE) file for details
+
