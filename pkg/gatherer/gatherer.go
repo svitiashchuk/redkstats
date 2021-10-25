@@ -4,11 +4,9 @@ import (
 	"context"
 	"github.com/go-redis/redis/v8"
 	"log"
-	"strconv"
 )
 
-// TDOO
-type Batch map[string]string
+type Batch map[string]int64
 
 type Gatherer struct {
 	rdb *redis.Client
@@ -24,9 +22,10 @@ type Options struct {
 	Match      string
 	FetchCount int64
 	BatchSize  int
+	Exporter   Exporter
 }
 
-func (g *Gatherer) Gather(ctx context.Context, exp Exporter) {
+func (g *Gatherer) Gather(ctx context.Context) {
 	batch := make(Batch)
 
 	cmd := g.rdb.Scan(ctx, g.opt.Cursor, g.opt.Match, g.opt.FetchCount)
@@ -37,10 +36,10 @@ func (g *Gatherer) Gather(ctx context.Context, exp Exporter) {
 		cnt += 1
 		key := iter.Val()
 		idleTimeCmd := g.rdb.ObjectIdleTime(ctx, key)
-		batch[key] = getIdleTimeStr(idleTimeCmd)
+		batch[key] = int64(idleTimeCmd.Val().Seconds())
 
 		if cnt >= g.opt.BatchSize {
-			err := exp.Export(batch)
+			err := g.opt.Exporter.Export(batch)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -51,14 +50,9 @@ func (g *Gatherer) Gather(ctx context.Context, exp Exporter) {
 	}
 
 	if cnt != 0 {
-		err := exp.Export(batch)
+		err := g.opt.Exporter.Export(batch)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-}
-
-// todo choose by optional parameter duration type
-func getIdleTimeStr(cmd *redis.DurationCmd) string {
-	return strconv.FormatInt(cmd.Val().Nanoseconds(), 10)
 }

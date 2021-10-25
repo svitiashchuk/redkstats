@@ -1,6 +1,9 @@
 package gatherer
 
-import "encoding/csv"
+import (
+	"encoding/csv"
+	"strconv"
+)
 
 type Exporter interface {
 	Export(batch Batch) error
@@ -22,7 +25,8 @@ func (exp *ExporterCSV) Export(batch Batch) error {
 	defer exp.Writer.Flush()
 
 	for k, v := range batch {
-		err := exp.Writer.Write([]string{k, v})
+		vs := strconv.FormatInt(v, 10)
+		err := exp.Writer.Write([]string{k, vs})
 		if err != nil {
 			return err
 		}

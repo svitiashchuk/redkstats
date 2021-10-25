@@ -10,6 +10,7 @@ import (
 	"redkstats/pkg/stats"
 	"redkstats/pkg/utils"
 	"sort"
+	"time"
 )
 
 var (
@@ -21,16 +22,27 @@ var (
 
 func main() {
 	rdb := setupRedis()
+
+	exp := gatherer.NewExporterMemory()
 	gat := gatherer.NewGatherer(rdb, &gatherer.Options{
 		FetchCount: fetchCount,
 		BatchSize:  batchSize,
+		Exporter:   exp,
 	})
 
-	exp := gatherer.NewExporterMemory()
-	gat.Gather(ctx, exp)
+	gat.Gather(ctx)
 	b := exp.GetExportedData()
 
-	p, err := stats.BatchToPrefixStatsInfoMap(b, 5)
+	for k, v := range b {
+		fmt.Printf("%d: %+v\n", k, v)
+	}
+
+	st := stats.NewStats(&stats.Options{
+		PrefixLen:          5,
+		PrefixNamespaceSep: ":",
+	})
+
+	p, err := st.BatchToPrefixStatsInfoMap(b)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +50,7 @@ func main() {
 	sort.Sort(stats.ByAvg(p))
 
 	for k, v := range p {
-		fmt.Printf("%d: %+v\n", k, v)
+		fmt.Printf("%d: %s = %+v\n", k, v.Prefix, v.Avg*float64(time.Second)/float64(time.Minute))
 	}
 }
 
